@@ -1,26 +1,27 @@
 <?php
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 
 $uri = $_SERVER['REQUEST_URI'];
 
-// Check if Nuvio is asking for the manifest
-if (strpos($uri, 'manifest.json') !== false) {
+// 1. Respond to Nuvio's Manifest request
+if (str_contains($uri, 'manifest.json')) {
     $manifest = [
-        'id' => 'org.custom.nuvioaddon',
+        'id' => 'com.custom.nuvioaddon',
         'version' => '1.0.0',
         'name' => 'Custom Test Addon',
-        'description' => 'A custom stream addon',
+        'description' => 'Baseline test addon',
         'types' => ['movie'],
         'catalogs' => [],
-        'resources' => ['stream']
+        'resources' => ['stream'],
+        'idPrefixes' => ['tt']
     ];
     echo json_encode($manifest);
     exit;
 }
 
-// Check if it's asking for a stream (using Big Buck Bunny as a test ID)
-if (strpos($uri, 'stream') !== false) {
+// 2. Respond to Big Buck Bunny stream request (IMDb ID: tt1254207)
+if (str_contains($uri, 'tt1254207')) {
     $response = [
         'streams' => [
             [
@@ -33,5 +34,6 @@ if (strpos($uri, 'stream') !== false) {
     exit;
 }
 
+// 3. Default fallback for any other requests
 echo json_encode(['streams' => []]);
 ?>
