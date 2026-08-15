@@ -64,8 +64,8 @@ function scrape_pelispedia($id) {
     if (!$html) return null;
 
     // 1) Direct .m3u8 reference
-    if (preg_match('/https?:\\/\\/[^"'"'\\s]+\\.m3u8[^"'"'\\s]*/i', $html, $m)) {
-        return html_entity_decode($m[0]);
+    if (preg_match('/(https?:\/\/[^"\'\s]+\.m3u8[^"\'\s]*)/i', $html, $m)) {
+        return html_entity_decode($m[1]);
     }
 
     // 2) Look for iframe embeds and follow
@@ -75,10 +75,10 @@ function scrape_pelispedia($id) {
             $embed = (parse_url($url, PHP_URL_SCHEME) ?: 'https') . '://' . parse_url($url, PHP_URL_HOST) . $embed;
         }
         $embedHtml = _curl_get($embed);
-        if ($embedHtml && preg_match('/https?:\\/\\/[^"'"'\\s]+\\.m3u8[^"'"'\\s]*/i', $embedHtml, $mm)) {
-            return html_entity_decode($mm[0]);
+        if ($embedHtml && preg_match('/(https?:\/\/[^"\'\s]+\.m3u8[^"\'\s]*)/i', $embedHtml, $mm)) {
+            return html_entity_decode($mm[1]);
         }
-        if ($embedHtml && preg_match('/source\s*[:=]\s*["\'](https?:\\/\\/[^"\']+\\.m3u8[^"\']*)["\']/i', $embedHtml, $mm)) {
+        if ($embedHtml && preg_match('/source\s*[:=]\s*["\'](https?:\/\/[^"\']+\.m3u8[^"\']*)["\']/i', $embedHtml, $mm)) {
             return html_entity_decode($mm[1]);
         }
 
@@ -119,15 +119,15 @@ function scrape_pelispedia($id) {
                                     $iv = substr($decoded, 0, 16);
                                     $cipher = substr($decoded, 16);
                                     $plain = openssl_decrypt($cipher, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv);
-                                    if ($plain && preg_match('/https?:\\/\\/[^"\'\s]+\\.m3u8[^"\'\s]*/i', $plain, $pm)) {
-                                        return html_entity_decode($pm[0]);
+                                    if ($plain && preg_match('/(https?:\/\/[^"\'\s]+\.m3u8[^"\'\s]*)/i', $plain, $pm)) {
+                                        return html_entity_decode($pm[1]);
                                     }
                                     // also try to find a player url inside the decrypted payload
-                                    if ($plain && preg_match('/https?:\\/\\/[^"\'\s]+/i', $plain, $pu)) {
+                                    if ($plain && preg_match('/(https?:\/\/[^"\'\s]+)/i', $plain, $pu)) {
                                         $candidate = $pu[0];
                                         $follow = _curl_get($candidate);
-                                        if ($follow && preg_match('/https?:\\/\\/[^"\'\s]+\\.m3u8[^"\'\s]*/i', $follow, $fm)) {
-                                            return html_entity_decode($fm[0]);
+                                        if ($follow && preg_match('/(https?:\/\/[^"\'\s]+\.m3u8[^"\'\s]*)/i', $follow, $fm)) {
+                                            return html_entity_decode($fm[1]);
                                         }
                                     }
                                 }
