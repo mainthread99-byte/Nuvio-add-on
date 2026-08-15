@@ -11,14 +11,24 @@ function _curl_get($url, $headers = []) {
     if (!empty($headers)) {
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
     }
-    // optional proxy from config.json
-    $cfgPath = dirname(__DIR__) . '/config.json';
-    if (file_exists($cfgPath)) {
-        $cfg = json_decode(file_get_contents($cfgPath), true) ?? [];
-        if (!empty($cfg['proxy']) && !empty($cfg['proxy']['enabled']) && !empty($cfg['proxy']['url'])) {
-            curl_setopt($ch, CURLOPT_PROXY, $cfg['proxy']['url']);
-            if (!empty($cfg['proxy']['user']) && $cfg['proxy']['pass'] !== '') {
-                curl_setopt($ch, CURLOPT_PROXYUSERPWD, $cfg['proxy']['user'] . ':' . $cfg['proxy']['pass']);
+    // proxy config: prefer environment variables (safer), fall back to config.json
+    $envProxyUrl = getenv('NUVIO_PROXY_URL') ?: getenv('PROXY_URL');
+    $envProxyUser = getenv('NUVIO_PROXY_USER') ?: getenv('PROXY_USER');
+    $envProxyPass = getenv('NUVIO_PROXY_PASS') ?: getenv('PROXY_PASS');
+    if (!empty($envProxyUrl)) {
+        curl_setopt($ch, CURLOPT_PROXY, $envProxyUrl);
+        if ($envProxyUser !== false && $envProxyUser !== '') {
+            curl_setopt($ch, CURLOPT_PROXYUSERPWD, $envProxyUser . ':' . ($envProxyPass ?: ''));
+        }
+    } else {
+        $cfgPath = dirname(__DIR__) . '/config.json';
+        if (file_exists($cfgPath)) {
+            $cfg = json_decode(file_get_contents($cfgPath), true) ?? [];
+            if (!empty($cfg['proxy']) && !empty($cfg['proxy']['enabled']) && !empty($cfg['proxy']['url'])) {
+                curl_setopt($ch, CURLOPT_PROXY, $cfg['proxy']['url']);
+                if (!empty($cfg['proxy']['user']) && $cfg['proxy']['pass'] !== '') {
+                    curl_setopt($ch, CURLOPT_PROXYUSERPWD, $cfg['proxy']['user'] . ':' . $cfg['proxy']['pass']);
+                }
             }
         }
     }
