@@ -26,7 +26,7 @@ if (str_contains($uri, 'tt1254207')) {
         'streams' => [
             [
                 'title' => 'Big Buck Bunny (1080p Test)',
-                'url' => 'http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_30fps_normal.mp4'
+                'url' => 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
             ]
         ]
     ];
