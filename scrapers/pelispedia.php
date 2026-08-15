@@ -12,7 +12,19 @@ function _curl_get($url, $headers = []) {
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
     }
     $ret = curl_exec($ch);
+    $info = curl_getinfo($ch);
     curl_close($ch);
+    // Lightweight debug logging when requested via query param
+    if (!empty($_GET['__debug'])) {
+        $log = [];
+        $log[] = "URL: " . $url;
+        $log[] = "HTTP_CODE: " . ($info['http_code'] ?? '');
+        $log[] = "TOTAL_TIME: " . ($info['total_time'] ?? '');
+        $log[] = "LENGTH: " . strlen($ret);
+        $log[] = "SNIPPET: " . substr($ret, 0, 800);
+        $path = sys_get_temp_dir() . '/nuvio_scrape_debug.log';
+        file_put_contents($path, implode("\n", $log) . "\n---\n", FILE_APPEND | LOCK_EX);
+    }
     return $ret;
 }
 
