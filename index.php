@@ -1,25 +1,37 @@
 <?php
-// 1. Essential headers so Nuvio is allowed to read the response
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
-// 2. Grab the media type (movie/series) and IMDb ID that Nuvio sent
-$type = $_GET['type'] ?? '';
-$id = $_GET['id'] ?? '';
+$uri = $_SERVER['REQUEST_URI'];
 
-// 3. Prepare the stream array
-$streams = [];
-
-// 4. Return a test video if Nuvio asks for a movie or TV show
-if ($type === 'movie' || $type === 'series') {
-    $streams[] = [
-        "name" => "My API",
-        "title" => "Test Stream (1080p)\nRequested ID: " . $id,
-        "url" => "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+// Check if Nuvio is asking for the manifest
+if (strpos($uri, 'manifest.json') !== false) {
+    $manifest = [
+        'id' => 'org.custom.nuvioaddon',
+        'version' => '1.0.0',
+        'name' => 'Custom Test Addon',
+        'description' => 'A custom stream addon',
+        'types' => ['movie'],
+        'catalogs' => [],
+        'resources' => ['stream']
     ];
+    echo json_encode($manifest);
+    exit;
 }
 
-// 5. Output the exact JSON format Nuvio expects
-echo json_encode(["streams" => $streams]);
-?>
+// Check if it's asking for a stream (using Big Buck Bunny as a test ID)
+if (strpos($uri, 'stream') !== false) {
+    $response = [
+        'streams' => [
+            [
+                'title' => 'Big Buck Bunny (1080p Test)',
+                'url' => 'http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_30fps_normal.mp4'
+            ]
+        ]
+    ];
+    echo json_encode($response);
+    exit;
+}
 
+echo json_encode(['streams' => []]);
+?>
