@@ -1,0 +1,9 @@
+{
+    "admin_password": "changeme",
+    "sites": {
+        "pelispedia": {
+            "name": "Pelispedia",
+            "enabled": true
+        }
+    }
+}

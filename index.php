@@ -58,10 +58,32 @@ if (str_contains($uri, 'stream/movie/')) {
 echo json_encode(['streams' => []]);
 
 
-// --- SCRAPER SKELETON FUNCTION ---
+// --- SCRAPER FUNCTIONS ---
+function loadAddonConfig() {
+    $path = __DIR__ . '/config.json';
+    if (!file_exists($path)) return ['sites' => []];
+    $json = file_get_contents($path);
+    $cfg = json_decode($json, true);
+    return $cfg ?? ['sites' => []];
+}
+
 function scrapeTargetSite($imdbId) {
-    // This is where we will route the search and regex extraction 
-    // once you're ready to hook up the live site parsing.
+    $cfg = loadAddonConfig();
+    if (empty($cfg['sites'])) return null;
+
+    foreach ($cfg['sites'] as $key => $meta) {
+        if (empty($meta['enabled'])) continue;
+        $scraperFile = __DIR__ . '/scrapers/' . $key . '.php';
+        if (!file_exists($scraperFile)) continue;
+        include_once $scraperFile;
+        $func = 'scrape_' . $key;
+        if (function_exists($func)) {
+            $result = $func($imdbId);
+            if ($result) return $result;
+        }
+    }
+
     return null;
 }
+
 ?>
