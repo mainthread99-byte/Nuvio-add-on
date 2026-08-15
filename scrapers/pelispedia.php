@@ -11,6 +11,17 @@ function _curl_get($url, $headers = []) {
     if (!empty($headers)) {
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
     }
+    // optional proxy from config.json
+    $cfgPath = dirname(__DIR__) . '/config.json';
+    if (file_exists($cfgPath)) {
+        $cfg = json_decode(file_get_contents($cfgPath), true) ?? [];
+        if (!empty($cfg['proxy']) && !empty($cfg['proxy']['enabled']) && !empty($cfg['proxy']['url'])) {
+            curl_setopt($ch, CURLOPT_PROXY, $cfg['proxy']['url']);
+            if (!empty($cfg['proxy']['user']) && $cfg['proxy']['pass'] !== '') {
+                curl_setopt($ch, CURLOPT_PROXYUSERPWD, $cfg['proxy']['user'] . ':' . $cfg['proxy']['pass']);
+            }
+        }
+    }
     $ret = curl_exec($ch);
     $info = curl_getinfo($ch);
     curl_close($ch);

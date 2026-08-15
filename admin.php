@@ -38,14 +38,25 @@ if (!($_SESSION['auth'] ?? false)) {
 
 $message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
-    foreach ($cfg['sites'] as $key => $site) {
-        $cfg['sites'][$key]['enabled'] = isset($_POST['site_' . $key]) ? true : false;
-    }
-    if (isset($_POST['admin_password']) && $_POST['admin_password'] !== '') {
-        $cfg['admin_password'] = $_POST['admin_password'];
-    }
-    file_put_contents($cfgPath, json_encode($cfg, JSON_PRETTY_PRINT));
-    $message = 'Saved.';
+  foreach ($cfg['sites'] as $key => $site) {
+    $cfg['sites'][$key]['enabled'] = isset($_POST['site_' . $key]) ? true : false;
+  }
+  if (isset($_POST['admin_password']) && $_POST['admin_password'] !== '') {
+    $cfg['admin_password'] = $_POST['admin_password'];
+  }
+  // proxy settings
+  $proxyUrl = trim($_POST['proxy_url'] ?? '');
+  $proxyUser = trim($_POST['proxy_user'] ?? '');
+  $proxyPass = trim($_POST['proxy_pass'] ?? '');
+  $cfg['proxy'] = [
+    'enabled' => $proxyUrl !== '' ? true : false,
+    'url' => $proxyUrl,
+    'user' => $proxyUser,
+    'pass' => $proxyPass
+  ];
+
+  file_put_contents($cfgPath, json_encode($cfg, JSON_PRETTY_PRINT));
+  $message = 'Saved.';
 }
 
 ?>
@@ -64,6 +75,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
         </label>
       </div>
     <?php endforeach; ?>
+  </fieldset>
+  <fieldset>
+    <legend>Proxy (optional)</legend>
+    <div>
+      <label>Proxy URL: <input type="text" name="proxy_url" value="<?=htmlspecialchars($cfg['proxy']['url'] ?? '')?>" placeholder="http://host:port"></label>
+    </div>
+    <div>
+      <label>Proxy User: <input type="text" name="proxy_user" value="<?=htmlspecialchars($cfg['proxy']['user'] ?? '')?>"></label>
+    </div>
+    <div>
+      <label>Proxy Pass: <input type="password" name="proxy_pass" value="<?=htmlspecialchars($cfg['proxy']['pass'] ?? '')?>"></label>
+    </div>
   </fieldset>
   <div>
     <label>Admin password: <input type="text" name="admin_password" value="<?=htmlspecialchars($cfg['admin_password'] ?? '')?>"></label>

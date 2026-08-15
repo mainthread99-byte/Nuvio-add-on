@@ -6,4 +6,11 @@
             "enabled": true
         }
     }
+    ,
+    "proxy": {
+        "enabled": false,
+        "url": "",
+        "user": "",
+        "pass": ""
+    }
 }
