@@ -55,6 +55,14 @@ if (str_contains($uri, 'stream/movie/')) {
 }
 
 // 3. Default fallback
+// Temporary: allow direct scraping via query param `scrape_url` for testing
+if (!empty($_GET['scrape_url'])) {
+    $testUrl = $_GET['scrape_url'];
+    $found = scrapeTargetSite($testUrl);
+    echo json_encode(['streams' => $found ? [['name'=>'Scraped','title'=>'Scraped Stream','url'=>$found,'behaviorHints'=>['notWebReady'=>false]]] : []]);
+    exit;
+}
+
 echo json_encode(['streams' => []]);
 
 
