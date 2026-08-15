@@ -1,6 +1,8 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, OPTIONS');
+header('Access-Control-Allow-Headers: *');
 
 $uri = $_SERVER['REQUEST_URI'];
 
@@ -25,8 +27,12 @@ if (str_contains($uri, 'tt1254207')) {
     $response = [
         'streams' => [
             [
-                'title' => 'Big Buck Bunny (1080p Test)',
-                'url' => 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+                'name' => 'Test Addon',
+                'title' => 'Big Buck Bunny (1080p)',
+                'url' => 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+                'behaviorHints' => [
+                    'notWebReady' => false
+                ]
             ]
         ]
     ];
