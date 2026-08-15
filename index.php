@@ -63,6 +63,18 @@ if (!empty($_GET['scrape_url'])) {
     exit;
 }
 
+// Temporary debug log endpoint: returns contents of server-side debug log
+if (!empty($_GET['get_debug_log'])) {
+    $path = sys_get_temp_dir() . '/nuvio_scrape_debug.log';
+    if (file_exists($path)) {
+        header('Content-Type: text/plain; charset=utf-8');
+        echo file_get_contents($path);
+    } else {
+        echo "(no debug log found)";
+    }
+    exit;
+}
+
 echo json_encode(['streams' => []]);
 
 
