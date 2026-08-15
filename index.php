@@ -59,7 +59,12 @@ if (str_contains($uri, 'stream/movie/')) {
 if (!empty($_GET['scrape_url'])) {
     $testUrl = $_GET['scrape_url'];
     $found = scrapeTargetSite($testUrl);
-    echo json_encode(['streams' => $found ? [['name'=>'Scraped','title'=>'Scraped Stream','url'=>$found,'behaviorHints'=>['notWebReady'=>false]]] : []]);
+    $out = ['streams' => $found ? [['name'=>'Scraped','title'=>'Scraped Stream','url'=>$found,'behaviorHints'=>['notWebReady'=>false]]] : []];
+    if (!empty($_GET['__debug'])) {
+        $path = sys_get_temp_dir() . '/nuvio_scrape_debug.log';
+        $out['debug_log'] = file_exists($path) ? substr(file_get_contents($path), 0, 20000) : '(no debug log)';
+    }
+    echo json_encode($out);
     exit;
 }
 
