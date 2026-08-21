@@ -40,6 +40,21 @@ if ($action === 'manifest') {
     
     $streams = scrapeStream($id, $config);
     echo json_encode(['streams' => $streams]);
+} elseif ($action === 'debug') {
+    // Debug: fetch and show raw HTML snippet
+    $url = $_GET['url'] ?? null;
+    if ($url) {
+        require_once __DIR__ . '/scrapers/pelispedia.php';
+        $html = _curl_get($url, $config);
+        echo json_encode([
+            'url' => $url,
+            'status' => $html ? 'fetched' : 'failed',
+            'length' => strlen($html ?? ''),
+            'snippet' => substr($html ?? '', 0, 1000)
+        ]);
+    } else {
+        echo json_encode(['error' => 'url param required']);
+    }
 } else {
     echo json_encode(['error' => 'Invalid action']);
 }
@@ -60,7 +75,7 @@ function scrapeStream($imdbId, $config) {
             $scraperFunc = "scrape_{$siteKey}";
             if (function_exists($scraperFunc)) {
                 $result = $scraperFunc($imdbId, $config);
-                if ($result) {
+                if ($result && is_string($result)) {
                     $streams[] = [
                         'url' => $result,
                         'title' => "{$siteConfig['name']} Stream",
