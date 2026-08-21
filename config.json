@@ -1,16 +1,16 @@
 {
-    "admin_password": "changeme",
-    "sites": {
-        "pelispedia": {
-            "name": "Pelispedia",
-            "enabled": true
-        }
+  "admin_password": "changeme",
+  "sites": {
+    "pelispedia": {
+      "name": "Pelispedia",
+      "enabled": true,
+      "url_pattern": "pelispedia"
     }
-    ,
-    "proxy": {
-        "enabled": false,
-        "url": "",
-        "user": "",
-        "pass": ""
-    }
+  },
+  "proxy": {
+    "enabled": false,
+    "url": "",
+    "user": "",
+    "pass": ""
+  }
 }

@@ -1,114 +1,75 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, OPTIONS');
-header('Access-Control-Allow-Headers: *');
+/**
+ * Nuvio Add-on: Latin Streaming Scraper
+ * Entry point for Nuvio to fetch add-on manifest and stream URLs
+ */
 
-$uri = $_SERVER['REQUEST_URI'];
+header('Content-Type: application/json');
 
-// 1. Respond to Nuvio's Manifest request
-if (str_contains($uri, 'manifest.json')) {
-    $manifest = [
-        'id' => 'com.custom.nuvioaddon',
+// Load config
+$configPath = __DIR__ . '/config.json';
+$config = file_exists($configPath) ? json_decode(file_get_contents($configPath), true) : [];
+
+// Route based on request
+$action = $_GET['action'] ?? null;
+
+if ($action === 'manifest') {
+    echo json_encode([
+        'id' => 'nuvio-streaming-addon',
+        'name' => 'Latin Streaming Scraper',
         'version' => '1.0.0',
-        'name' => 'Custom Dynamic Addon',
-        'description' => 'HLS Test and Scraper Add-on',
-        'types' => ['movie'],
+        'types' => ['movie', 'series'],
         'catalogs' => [],
-        'resources' => ['stream'],
-        'idPrefixes' => ['tt']
-    ];
-    echo json_encode($manifest);
-    exit;
-}
-
-// 2. Handle Stream Requests
-if (str_contains($uri, 'stream/movie/')) {
-    preg_match('/tt\d+/', $uri, $matches);
-    $imdbId = $matches[0] ?? '';
-
-    $streams = [];
-
-    if ($imdbId === 'tt1254207') {
-        // Test an official public HLS (.m3u8) stream to verify Nuvio HLS playback
-        $streams[] = [
-            'name' => 'HLS Test Source',
-            'title' => 'Apple BipBop HLS Test (.m3u8)',
-            'url' => 'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_adv/bipbop_adv.m3u8',
-            'behaviorHints' => ['notWebReady' => false]
-        ];
-    } else {
-        // Scraper execution hook for your target site
-        $scrapedUrl = scrapeTargetSite($imdbId);
-        if ($scrapedUrl) {
-            $streams[] = [
-                'name' => 'Pelispedia',
-                'title' => 'Scraped Stream (HD)',
-                'url' => $scrapedUrl,
-                'behaviorHints' => ['notWebReady' => false]
-            ];
-        }
+        'resources' => [
+            [
+                'name' => 'stream',
+                'types' => ['movie', 'series'],
+                'idPrefixes' => ['tt']
+            ]
+        ],
+        'contactEmail' => 'support@example.com'
+    ]);
+} elseif ($action === 'stream') {
+    $type = $_GET['type'] ?? null;
+    $id = $_GET['id'] ?? null;
+    
+    if (!$type || !$id) {
+        echo json_encode(['streams' => []]);
+        exit;
     }
-
+    
+    $streams = scrapeStream($id, $config);
     echo json_encode(['streams' => $streams]);
-    exit;
+} else {
+    echo json_encode(['error' => 'Invalid action']);
 }
 
-// 3. Default fallback
-// Temporary: allow direct scraping via query param `scrape_url` for testing
-if (!empty($_GET['scrape_url'])) {
-    $testUrl = $_GET['scrape_url'];
-    $found = scrapeTargetSite($testUrl);
-    $out = ['streams' => $found ? [['name'=>'Scraped','title'=>'Scraped Stream','url'=>$found,'behaviorHints'=>['notWebReady'=>false]]] : []];
-    if (!empty($_GET['__debug'])) {
-        $path = sys_get_temp_dir() . '/nuvio_scrape_debug.log';
-        $out['debug_log'] = file_exists($path) ? substr(file_get_contents($path), 0, 20000) : '(no debug log)';
-    }
-    echo json_encode($out);
-    exit;
-}
-
-// Temporary debug log endpoint: returns contents of server-side debug log
-if (!empty($_GET['get_debug_log'])) {
-    $path = sys_get_temp_dir() . '/nuvio_scrape_debug.log';
-    if (file_exists($path)) {
-        header('Content-Type: text/plain; charset=utf-8');
-        echo file_get_contents($path);
-    } else {
-        echo "(no debug log found)";
-    }
-    exit;
-}
-
-echo json_encode(['streams' => []]);
-
-
-// --- SCRAPER FUNCTIONS ---
-function loadAddonConfig() {
-    $path = __DIR__ . '/config.json';
-    if (!file_exists($path)) return ['sites' => []];
-    $json = file_get_contents($path);
-    $cfg = json_decode($json, true);
-    return $cfg ?? ['sites' => []];
-}
-
-function scrapeTargetSite($imdbId) {
-    $cfg = loadAddonConfig();
-    if (empty($cfg['sites'])) return null;
-
-    foreach ($cfg['sites'] as $key => $meta) {
-        if (empty($meta['enabled'])) continue;
-        $scraperFile = __DIR__ . '/scrapers/' . $key . '.php';
-        if (!file_exists($scraperFile)) continue;
-        include_once $scraperFile;
-        $func = 'scrape_' . $key;
-        if (function_exists($func)) {
-            $result = $func($imdbId);
-            if ($result) return $result;
+/**
+ * Scrape a stream by IMDB ID
+ */
+function scrapeStream($imdbId, $config) {
+    $streams = [];
+    
+    // Get enabled sites from config
+    $enabledSites = array_filter($config['sites'] ?? [], fn($s) => $s['enabled'] ?? false);
+    
+    foreach ($enabledSites as $siteKey => $siteConfig) {
+        $scraperPath = __DIR__ . "/scrapers/{$siteKey}.php";
+        if (file_exists($scraperPath)) {
+            require_once $scraperPath;
+            $scraperFunc = "scrape_{$siteKey}";
+            if (function_exists($scraperFunc)) {
+                $result = $scraperFunc($imdbId, $config);
+                if ($result) {
+                    $streams[] = [
+                        'url' => $result,
+                        'title' => "{$siteConfig['name']} Stream",
+                        'source' => $siteKey
+                    ];
+                }
+            }
         }
     }
-
-    return null;
+    
+    return $streams;
 }
-
-?>
